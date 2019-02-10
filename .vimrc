@@ -1,7 +1,10 @@
 call plug#begin('~/.vim/plugged')
 " 定义插件，默认用法，和 Vundle 的语法差不多
+Plug 'vim-scripts/taglist.vim'
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+Plug 'ludovicchabant/vim-gutentags'
 Plug 'kana/vim-textobj-user'
 Plug 'skywind3000/asyncrun.vim'
 Plug 'kana/vim-textobj-indent'
@@ -19,11 +22,14 @@ Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 " 确定插件仓库中的分支或者 tag
 Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 Plug 'Raimondi/delimitMate'
+Plug 'rust-lang/rust.vim'
 Plug  'morhetz/gruvbox'
 Plug  'Valloric/YouCompleteMe'
 Plug  'vim-airline/vim-airline'
+Plug 'cespare/vim-toml'
 Plug  'vim-airline/vim-airline-themes'
 Plug  'w0rp/ale'
+Plug  'vim-scripts/TagHighlight'
 call plug#end()
 
 
@@ -32,6 +38,7 @@ call plug#end()
 " You can edit them as you wish
 
 " allow plugins by file type (required for plugins!)
+set tags=./.tags;,.tags
 set background=dark
 colorscheme gruvbox
 set t_Co=256 " required
@@ -136,6 +143,27 @@ endfun
 """"""""""""""""""""Plug
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""taglist"""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let Tlist_Use_Right_Window = 1 "让taglist窗口出现在Vim的右边
+
+let Tlist_File_Fold_Auto_Close = 1 "当同时显示多个文件中的tag时，设置为1，可使taglist只显示当前文件tag，其它文件的tag都被折叠起来。
+
+let Tlist_Show_One_File = 1 "只显示一个文件中的tag，默认为显示多个
+
+let Tlist_Sort_Type ='name'  "Tag的排序规则，以名字排序。默认是以在文件中出现的顺序排序
+
+let Tlist_GainFocus_On_ToggleOpen = 1 "Taglist窗口打开时，立刻切换为有焦点状态
+
+let Tlist_Exit_OnlyWindow = 1 "如果taglist窗口是最后一个窗口，则退出vim
+
+let Tlist_WinWidth = 32 "设置窗体宽度为32，可以根据自己喜好设置
+
+
+
+
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""'
 "" ulsnipets
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -152,6 +180,38 @@ au FileType python let b:delimitMate_nesting_quotes = ['"']
 " 关闭某些类型文件的自动补全
 "au FileType mail let b:delimitMate_autoclose = 0
 set pastetoggle=<F3>
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""vim-gutentags""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+" gutentags 搜索工程目录的标志，碰到这些文件/目录名就停止向上一级目录递归
+let g:gutentags_project_root = ['.root', '.svn', '.git', '.hg', '.project']
+
+" 所生成的数据文件的名称
+let g:gutentags_ctags_tagfile = '.tags'
+
+" 将自动生成的 tags 文件全部放入 ~/.cache/tags 目录中，避免污染工程目录
+let s:vim_tags = expand('~/.cache/tags')
+let g:gutentags_cache_dir = s:vim_tags
+
+" 配置 ctags 的参数
+let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
+let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
+
+" 检测 ~/.cache/tags 不存在就新建
+if !isdirectory(s:vim_tags)
+   silent! call mkdir(s:vim_tags, 'p')
+endif
+
+
+
+nnoremap <silent> <F8> :TlistToggle<CR>
+
+
+
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """""""""""""""leaderf""""""""""""""""""""""""""""""""""""""""""""""
@@ -209,6 +269,7 @@ nnoremap <silent> <F5> :AsyncRun -raw -cwd=$(VIM_FILEDIR) "$(VIM_FILEDIR)/$(VIM_
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """""""""""ycm
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let g:ycm_rust_src_path   = '~/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/src'
 let g:ycm_server_python_interpreter='/usr/bin/python3'
 let g:ycm_global_ycm_extra_conf='~/.vim/.ycm_extra_conf.py'
 let g:ycm_add_preview_to_completeopt = 0
@@ -227,7 +288,7 @@ set completeopt=menu,menuone
 noremap <c-i> <NOP>
 
 let g:ycm_semantic_triggers =  {
-			\ 'c,cpp,python,java,go,erlang,perl': ['re!\w{2}'],
+			\ 'c,cpp,python,java,go,erlang,perl,rust': ['re!\w{2}'],
 			\ 'cs,lua,javascript': ['re!\w{2}'],
 			\ }
 
@@ -272,6 +333,7 @@ let g:ale_linters = {
 \   'cpp': ['gcc','cppcheck'],
 \   'c': ['gcc','cppcheck'],
 \   'python': ['pylint'],
+\   'rust' :['rustc','cargo'],
 \}
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
